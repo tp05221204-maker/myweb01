@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONGUKIDS.STUDIO | 門市管理系統</title>
+    <style>
+        :root {
+            --main-color: #c4b9a9;
+            --text-color: #81786c;
+            --bg-white: #ffffff;
+            --border-color: #e0ddd9;
+            --hover-color: #b5a997;
+            --light-bg: #f9f8f7;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 側邊導航 */
+        .sidebar {
+            width: 240px;
+            background-color: var(--bg-white);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+        }
+        .sidebar-brand {
+            padding: 30px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--main-color);
+            letter-spacing: 1px;
+            text-align: center;
+            border-bottom: 1px solid var(--light-bg);
+        }
+        .nav-group { padding: 20px 0; }
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 14px;
+            border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background-color: var(--light-bg); }
+        .nav-item.active {
+            background-color: var(--light-bg);
+            border-left: 4px solid var(--main-color);
+            color: var(--main-color);
+            font-weight: bold;
+        }
+
+        /* 主內容 */
+        .main-content { margin-left: 240px; flex: 1; padding: 30px; }
+        .container { background: var(--bg-white); padding: 30px; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,0.03); }
+        .hidden { display: none !important; }
+
+        h2 { margin: 0 0 25px 0; font-size: 1.3rem; border-left: 5px solid var(--main-color); padding-left: 15px; }
+
+        /* 表單與輸入 */
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 2px;
+            color: var(--text-color); font-size: 14px;
+        }
+        button {
+            cursor: pointer; padding: 10px 20px; border: 1px solid var(--main-color);
+            border-radius: 2px; transition: 0.3s; background: var(--bg-white); color: var(--main-color);
+        }
+        button.btn-fill { background: var(--main-color); color: var(--bg-white); }
+        button:hover { opacity: 0.8; }
+
+        /* POS 結帳介面 */
+        .pos-container { display: grid; grid-template-columns: 1fr 380px; gap: 25px; align-items: start; }
+        .cat-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 1px solid var(--light-bg); padding-bottom: 15px; }
+        .cat-tab { padding: 6px 15px; background: #eee; border-radius: 20px; font-size: 13px; cursor: pointer; border: none; }
+        .cat-tab.active { background: var(--main-color); color: white; }
+        
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; max-height: 550px; overflow-y: auto; }
+        .p-item { border: 1px solid var(--border-color); padding: 10px; text-align: center; cursor: pointer; }
+        .p-item img { width: 100%; height: 100px; object-fit: cover; margin-bottom: 8px; }
+        .p-item-name { font-size: 12px; font-weight: bold; height: 34px; overflow: hidden; }
+
+        .cart-panel { background: #fdfcfb; border: 1px solid var(--border-color); padding: 20px; }
+        .cart-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cart-table th { text-align: left; border-bottom: 1px solid var(--main-color); padding: 8px 0; }
+        .cart-table td { padding: 10px 0; border-bottom: 1px dotted #eee; }
+
+        .summary { margin-top: 20px; text-align: right; }
+        .total-price { font-size: 2rem; color: var(--main-color); font-weight: bold; }
+
+        /* 報表與卡片 */
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .report-card { padding: 30px; border: 1px solid var(--border-color); text-align: center; }
+        .report-num { font-size: 1.8rem; font-weight: bold; color: var(--main-color); margin: 10px 0; }
+
+        .status-tag { padding: 2px 8px; font-size: 11px; border-radius: 10px; }
+        .on { background: #e8f5e9; color: #2e7d32; }
+        .off { background: #ffebee; color: #c62828; }
+        .img-thumb { width: 50px; height: 50px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-brand">ONGUKIDS.STUDIO</div>
+    <div class="nav-group">
+        <div class="nav-item active" onclick="switchPage('pos', this)">門市結帳系統</div>
+        <div class="nav-item" onclick="switchPage('admin', this)">後台進銷存管理</div>
+        <div class="nav-item" onclick="switchPage('report', this)">銷售報表統計</div>
+    </div>
+</div>
+
+<div class="main-content">
+
+    <div id="pagePos" class="page-section">
+        <div class="container">
+            <div class="pos-container">
+                <div>
+                    <input type="text" id="scanField" placeholder="掃描商品條碼..." onkeypress="handleScan(event)" style="margin-bottom:20px; border: 2px solid var(--main-color);">
+                    
+                    <div class="cat-bar" id="posCats">
+                        </div>
+                    
+                    <div class="product-grid" id="posProducts">
+                        </div>
+                </div>
+
+                <div class="cart-panel">
+                    <h3>結帳清單</h3>
+                    <div class="form-group">
+                        <input type="text" id="cPhone" placeholder="輸入會員電話" oninput="findMember()">
+                        <input type="text" id="cName" placeholder="顧客姓名" style="margin-top:8px;">
+                    </div>
+                    
+                    <table class="cart-table">
+                        <thead><tr><th>品名</th><th>Qty</th><th>單價</th><th>小計</th></tr></thead>
+                        <tbody id="cartBody"></tbody>
+                    </table>
+
+                    <div class="form-group" style="margin-top:20px;">
+                        <label>折扣設定 (扣除金額如 -100 或 %數如 0.9)</label>
+                        <input type="number" id="orderDisc" value="0" step="0.1" oninput="calculateTotal()">
+                    </div>
+
+                    <div class="summary">
+                        <div>總金額</div>
+                        <div class="total-price">NT$ <span id="displayTotal">0</span></div>
+                    </div>
+
+                    <label style="margin-top:15px;">結帳方式</label>
+                    <select id="payMethod" style="margin-bottom:15px;">
+                        <option value="現金">現金 Cash</option>
+                        <option value="LINEPAY">LINEPAY</option>
+                        <option value="刷卡">信用卡 Credit Card</option>
+                    </select>
+
+                    <textarea id="posNote" placeholder="訂單備註..." rows="2"></textarea>
+                    <button class="btn-fill" style="width:100%; margin-top:20px; padding:15px;" onclick="submitOrder()">完成結帳</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pageAdmin" class="page-section hidden">
+        <div class="container">
+            <h2>商品上架管理</h2>
+            <div class="grid">
+                <div>
+                    <div class="form-group">
+                        <label>商品圖片</label>
+                        <input type="file" accept="image/*" onchange="previewFile(this)">
+                        <img id="imgPreview" style="display:none; width:100px; margin-top:10px;">
+                    </div>
+                    <div class="form-group">
+                        <label>商品條碼</label>
+                        <input type="text" id="pBar">
+                    </div>
+                    <div class="form-group">
+                        <label>商品分類</label>
+                        <select id="pCat">
+                            <option value="上衣">上衣</option>
+                            <option value="褲裝">褲裝</option>
+                            <option value="洋裝">洋裝</option>
+                            <option value="配件">配件</option>
+                            <option value="鞋襪">鞋襪</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>商品名稱</label>
+                        <input type="text" id="pName">
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label>設定顏色</label>
+                        <input type="text" id="pColor" placeholder="例如：奶油色">
+                    </div>
+                    <div class="form-group">
+                        <label>設定尺寸</label>
+                        <input type="text" id="pSize" placeholder="例如：90cm">
+                    </div>
+                    <div class="form-group">
+                        <label>商品價格</label>
+                        <input type="number" id="pPrice">
+                    </div>
+                    <div class="form-group">
+                        <label>初始庫存</label>
+                        <input type="number" id="pStock">
+                    </div>
+                    <div class="form-group">
+                        <label>上架狀態</label>
+                        <select id="pStatus">
+                            <option value="on">上架銷售</option>
+                            <option value="off">下架庫存</option>
+                        </select>
+                    </div>
+                    <button class="btn-fill" style="width:100%" onclick="saveProduct()">儲存並新增</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top:40px;">現有庫存追蹤</h3>
+            <table class="cart-table" style="font-size:14px;">
+                <thead>
+                    <tr><th>圖片</th><th>條碼</th><th>分類</th><th>品名</th><th>顏色</th><th>尺寸</th><th>單價</th><th>庫存</th><th>狀態</th><th>操作</th></tr>
+                </thead>
+                <tbody id="inventoryBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="pageReport" class="page-section hidden">
+        <div class="container">
+            <h2>財務報表統計</h2>
+            <div class="report-grid">
+                <div class="report-card">
+                    <label>本月營業額</label>
+                    <div class="report-num" id="mTotal">NT$ 0</div>
+                    <div id="mCount">訂單數: 0</div>
+                </div>
+                <div class="report-card">
+                    <label>前 6 個月累計營業額 (稅務參考)</label>
+                    <div class="report-num" id="sTotal">NT$ 0</div>
+                    <div id="sCount">訂單數: 0</div>
+                </div>
+            </div>
+            <h3>歷史銷售紀錄</h3>
+            <table class="cart-table">
+                <thead><tr><th>時間</th><th>客戶</th><th>支付</th><th>總額</th><th>備註</th></tr></thead>
+                <tbody id="orderBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- 資料結構 ---
+    let products = JSON.parse(localStorage.getItem('ongu_products')) || [];
+    let orders = JSON.parse(localStorage.getItem('ongu_orders')) || [];
+    let members = JSON.parse(localStorage.getItem('ongu_members')) || [];
+    let cart = [];
+    let tempImg = "";
+
+    // --- 頁面切換 ---
+    function switchPage(page, el) {
+        document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
+        document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1)).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+        if(page === 'pos') renderPos();
+        if(page === 'admin') renderInventory();
+        if(page === 'report') renderReport();
+    }
+
+    // --- 後台管理邏輯 ---
+    function previewFile(input) {
+        const reader = new FileReader();
+        reader.onload = e => { tempImg = e.target.result; document.getElementById('imgPreview').src = tempImg; document.getElementById('imgPreview').style.display = 'block'; };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function saveProduct() {
+        const p = {
+            id: Date.now(),
+            bar: document.getElementById('pBar').value,
+            cat: document.getElementById('pCat').value,
+            name: document.getElementById('pName').value,
+            color: document.getElementById('pColor').value,
+            size: document.getElementById('pSize').value,
+            price: parseInt(document.getElementById('pPrice').value),
+            stock: parseInt(document.getElementById('pStock').value),
+            status: document.getElementById('pStatus').value,
+            img: tempImg
+        };
+        if(!p.bar || !p.name || isNaN(p.price)) return alert("請填寫必要資訊");
+        products.push(p);
+        localStorage.setItem('ongu_products', JSON.stringify(products));
+        alert("儲存成功");
+        location.reload();
+    }
+
+    function renderInventory() {
+        const body = document.getElementById('inventoryBody');
+        body.innerHTML = products.map(p => `
+            <tr>
+                <td><img src="${p.img}" class="img-thumb"></td>
+                <td>${p.bar}</td>
+                <td>${p.cat}</td>
+                <td>${p.name}</td>
+                <td>${p.color}</td>
+                <td>${p.size}</td>
+                <td>${p.price}</td>
+                <td style="font-weight:bold">${p.stock}</td>
+                <td><span class="status-tag ${p.status}">${p.status==='on'?'上架':'下架'}</span></td>
+                <td><button onclick="deleteProduct(${p.id})">刪除</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function deleteProduct(id) {
+        if(!confirm("確定刪除此商品?")) return;
+        products = products.filter(p => p.id !== id);
+        localStorage.setItem('ongu_products', JSON.stringify(products));
+        renderInventory();
+    }
+
+    // --- 門市結帳邏輯 ---
+    function renderPos(filterCat = 'all') {
+        // 渲染分類列
+        const cats = ['all', ...new Set(products.map(p => p.cat))];
+        document.getElementById('posCats').innerHTML = cats.map(c => 
+            `<button class="cat-tab ${filterCat===c?'active':''}" onclick="renderPos('${c}')">${c==='all'?'全部':c}</button>`
+        ).join('');
+
+        // 渲染商品
+        const grid = document.getElementById('posProducts');
+        const displayList = filterCat === 'all' ? products : products.filter(p => p.cat === filterCat);
+        grid.innerHTML = displayList.filter(p => p.status === 'on').map(p => `
+            <div class="p-item" onclick="addToCart('${p.bar}')">
+                <img src="${p.img}">
+                <div class="p-item-name">${p.name} (${p.size})</div>
+                <div style="color:var(--main-color)">$${p.price}</div>
+            </div>
+        `).join('');
+    }
+
+    function handleScan(e) {
+        if(e.key === 'Enter') {
+            addToCart(e.target.value);
+            e.target.value = "";
+        }
+    }
+
+    function addToCart(bar) {
+        const p = products.find(x => x.bar === bar && x.status === 'on');
+        if(!p) return alert("找不到商品或已下架");
+        if(p.stock <= 0) return alert("庫存不足");
+        
+        const exist = cart.find(c => c.bar === bar);
+        if(exist) exist.qty++; else cart.push({...p, qty: 1});
+        renderCart();
+    }
+
+    function renderCart() {
+        const body = document.getElementById('cartBody');
+        body.innerHTML = cart.map(c => `
+            <tr>
+                <td>${c.name}</td>
+                <td>${c.qty}</td>
+                <td>${c.price}</td>
+                <td>${c.price * c.qty}</td>
+            </tr>
+        `).join('');
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let subtotal = cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
+        const disc = parseFloat(document.getElementById('orderDisc').value) || 0;
+        
+        let final = subtotal;
+        if(disc < 0) final += disc; // 滿額減價
+        else if(disc > 0 && disc < 1) final *= disc; // %數折
+        
+        document.getElementById('displayTotal').innerText = Math.round(final).toLocaleString();
+    }
+
+    function findMember() {
+        const m = members.find(x => x.phone === document.getElementById('cPhone').value);
+        if(m) document.getElementById('cName').value = m.name;
+    }
+
+    function submitOrder() {
+        if(!cart.length) return;
+        const total = parseInt(document.getElementById('displayTotal').innerText.replace(/,/g, ''));
+        const order = {
+            id: Date.now(),
+            date: new Date(),
+            name: document.getElementById('cName').value,
+            phone: document.getElementById('cPhone').value,
+            total: total,
+            pay: document.getElementById('payMethod').value,
+            note: document.getElementById('posNote').value,
+            items: [...cart]
+        };
+
+        // 扣庫存與存會員
+        cart.forEach(c => {
+            const p = products.find(x => x.bar === c.bar);
+            if(p) p.stock -= c.qty;
+        });
+        if(order.phone && !members.find(m => m.phone === order.phone)) {
+            members.push({name: order.name, phone: order.phone});
+        }
+
+        orders.push(order);
+        localStorage.setItem('ongu_orders', JSON.stringify(orders));
+        localStorage.setItem('ongu_products', JSON.stringify(products));
+        localStorage.setItem('ongu_members', JSON.stringify(members));
+
+        alert("結帳完成");
+        cart = []; renderCart();
+        document.getElementById('cName').value = ""; document.getElementById('cPhone').value = "";
+    }
+
+    // --- 報表統計邏輯 ---
+    function renderReport() {
+        const now = new Date();
+        const thisMonth = now.getMonth();
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(now.getMonth() - 6);
+
+        let mTotal = 0, mCount = 0, sTotal = 0, sCount = 0;
+
+        orders.forEach(o => {
+            const d = new Date(o.date);
+            if(d.getMonth() === thisMonth) { mTotal += o.total; mCount++; }
+            if(d >= sixMonthsAgo) { sTotal += o.total; sCount++; }
+        });
+
+        document.getElementById('mTotal').innerText = "NT$ " + mTotal.toLocaleString();
+        document.getElementById('mCount').innerText = "訂單數: " + mCount;
+        document.getElementById('sTotal').innerText = "NT$ " + sTotal.toLocaleString();
+        document.getElementById('sCount').innerText = "訂單數: " + sCount;
+
+        document.getElementById('orderBody').innerHTML = orders.slice().reverse().map(o => `
+            <tr>
+                <td>${new Date(o.date).toLocaleString()}</td>
+                <td>${o.name || '散客'}</td>
+                <td>${o.pay}</td>
+                <td>${o.total}</td>
+                <td>${o.note}</td>
+            </tr>
+        `).join('');
+    }
+
+    // 初始載入
+    renderPos();
+</script>
+
+</body>
+</html>
